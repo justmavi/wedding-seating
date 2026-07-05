@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Guest } from "../types";
 import { CAPACITY } from "../types";
 import { api } from "../api";
+import Spinner from "./Spinner";
 
 interface Props {
   num: number;
@@ -29,6 +30,7 @@ export default function TableDetail({
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     try {
@@ -37,6 +39,8 @@ export default function TableDetail({
       onError(null);
     } catch (e: any) {
       onError(e.message || "Չհաջողվեց բեռնել սեղանը");
+    } finally {
+      setLoading(false);
     }
   }, [num, onError]);
 
@@ -44,6 +48,7 @@ export default function TableDetail({
     setSelected([]);
     setSearch("");
     setAddName("");
+    setLoading(true);
     load();
   }, [num, load]);
 
@@ -120,7 +125,7 @@ export default function TableDetail({
       >
         <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>№{num} սեղան</h1>
         <span style={{ fontSize: 15, fontWeight: 600, color: countColor(count) }}>
-          {count}/{CAPACITY} տեղ
+          {loading ? "" : `${count}/${CAPACITY} տեղ`}
         </span>
       </div>
 
@@ -275,7 +280,9 @@ export default function TableDetail({
           overflow: "hidden",
         }}
       >
-        {filtered.length === 0 ? (
+        {loading ? (
+          <Spinner label="Բեռնվում են հյուրերը…" padding="clamp(36px, 12vw, 64px) 16px" />
+        ) : filtered.length === 0 ? (
           <div
             style={{
               padding: "22px 14px",

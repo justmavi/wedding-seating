@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Guest, TableSummary } from "../types";
 import { CAPACITY } from "../types";
 import { api } from "../api";
+import Spinner from "./Spinner";
 
 interface Props {
   tables: TableSummary[];
@@ -191,7 +192,7 @@ export default function HallMap({
           >
             <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Հարսանիքի նստատեղեր</h1>
             <span style={{ fontSize: 13, color: "#8a8a84" }}>
-              {loading ? "Բեռնվում է…" : `${total} հյուր նստեցված`}
+              {loading ? "" : `${total} հյուր նստեցված`}
             </span>
           </div>
 
@@ -263,6 +264,18 @@ export default function HallMap({
         </div>
       )}
 
+      {loading ? (
+        <div
+          style={{
+            marginTop: 14,
+            border: "1px solid #e2e2dc",
+            borderRadius: 14,
+            background: "#fbfbf9",
+          }}
+        >
+          <Spinner label="Բեռնվում են սեղանները…" padding="clamp(48px, 16vw, 96px) 16px" />
+        </div>
+      ) : (
       <div
         style={{
           marginTop: 14,
@@ -339,6 +352,7 @@ export default function HallMap({
             : "Դահլիճի առջևը  ·  հպեք սեղանին՝ հյուրերին խմբագրելու համար"}
         </div>
       </div>
+      )}
     </div>
   );
 }
