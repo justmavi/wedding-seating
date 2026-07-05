@@ -1,5 +1,4 @@
 import express, { type Request, type Response, type NextFunction } from "express";
-import { fileURLToPath } from "url";
 import { ensureSchema } from "./db.js";
 import { AppError } from "./errors.js";
 import { seatingRouter } from "./routes/seating.routes.js";
@@ -31,12 +30,8 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: message || "Սերվերի ներքին սխալ" });
 });
 
-// Local dev: `tsx watch api/index.ts` runs this file directly and starts a server.
-// On Vercel, the file is imported and the default export is used as the handler.
-const isDirectRun =
-  process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
-
-if (isDirectRun) {
+// Local dev only — tsx sets VERCEL to undefined, Vercel always sets it.
+if (!process.env.VERCEL) {
   const port = Number(process.env.PORT) || 3001;
   app.listen(port, "0.0.0.0", () => console.log(`[api] listening on http://0.0.0.0:${port}`));
 }
