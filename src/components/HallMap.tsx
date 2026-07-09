@@ -16,6 +16,8 @@ interface Props {
 }
 
 // Two tables per row, except a single table that sits at the very top of each side.
+// Within every row the lower (odd) number sits in the right column, the higher
+// (even) number in the left column.
 // Right side (tables 1..19): 1,2 at the bottom, ascending upward, table 19 alone on top.
 // Left side  (tables 20..38): table 20 alone on top, descending so 37,38 sit at the bottom.
 const RIGHT_TOP = 19;
@@ -24,19 +26,19 @@ const LEFT_TOP = 20;
 function rightPairs(): number[] {
   const nums: number[] = [];
   for (let r = 8; r >= 0; r--) {
-    nums.push(2 * r + 1, 2 * r + 2);
+    nums.push(2 * r + 2, 2 * r + 1);
   }
   return nums;
 }
 function leftPairs(): number[] {
   const nums: number[] = [];
   for (let r = 0; r < 9; r++) {
-    nums.push(21 + 2 * r, 22 + 2 * r);
+    nums.push(22 + 2 * r, 21 + 2 * r);
   }
   return nums;
 }
-const RIGHT_PAIRS = rightPairs(); // [17,18, 15,16, ..., 1,2]
-const LEFT_PAIRS = leftPairs();   // [21,22, 23,24, ..., 37,38]
+const RIGHT_PAIRS = rightPairs(); // [18,17, 16,15, ..., 2,1]
+const LEFT_PAIRS = leftPairs();   // [22,21, 24,23, ..., 38,37]
 
 function tableColors(count: number) {
   const full = count >= CAPACITY;
