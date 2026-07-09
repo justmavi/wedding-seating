@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS guests (
   id           SERIAL PRIMARY KEY,
   name         TEXT NOT NULL,
-  table_number INTEGER NOT NULL CHECK (table_number BETWEEN 1 AND 32),
+  table_number INTEGER NOT NULL CHECK (table_number BETWEEN 1 AND 38),
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

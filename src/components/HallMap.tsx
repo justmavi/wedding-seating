@@ -15,25 +15,28 @@ interface Props {
   onCancelPick?: () => void;
 }
 
-// Right side: numbered bottom-to-top (row 0 = bottom = tables 1,2).
-// Left side: numbered top-to-bottom (row 0 = top = tables 17,18; bottom = 31,32).
-function rightOrder(): number[] {
+// Two tables per row, except a single table that sits at the very top of each side.
+// Right side (tables 1..19): 1,2 at the bottom, ascending upward, table 19 alone on top.
+// Left side  (tables 20..38): table 20 alone on top, descending so 37,38 sit at the bottom.
+const RIGHT_TOP = 19;
+const LEFT_TOP = 20;
+
+function rightPairs(): number[] {
   const nums: number[] = [];
-  for (let t = 0; t < 8; t++) {
-    const r = 7 - t;
+  for (let r = 8; r >= 0; r--) {
     nums.push(2 * r + 1, 2 * r + 2);
   }
   return nums;
 }
-function leftOrder(): number[] {
+function leftPairs(): number[] {
   const nums: number[] = [];
-  for (let t = 0; t < 8; t++) {
-    nums.push(16 + 2 * t + 1, 16 + 2 * t + 2);
+  for (let r = 0; r < 9; r++) {
+    nums.push(21 + 2 * r, 22 + 2 * r);
   }
   return nums;
 }
-const RIGHT_NUMS = rightOrder(); // 1..16, bottom row = 1,2
-const LEFT_NUMS = leftOrder();   // 17..32, bottom row = 31,32
+const RIGHT_PAIRS = rightPairs(); // [17,18, 15,16, ..., 1,2]
+const LEFT_PAIRS = leftPairs();   // [21,22, 23,24, ..., 37,38]
 
 function tableColors(count: number) {
   const full = count >= CAPACITY;
@@ -87,53 +90,62 @@ export default function HallMap({
     };
   }, [query]);
 
-  const renderSide = (nums: number[]) => (
+  const renderTable = (num: number) => {
+    const count = countOf(num);
+    const disabled = pickMode && disabledTables?.has(num);
+    const c = disabled
+      ? { border: "#d0d0ca", bg: "#f4f4f1", countColor: "#b0b0a8" }
+      : tableColors(count);
+    return (
+      <button
+        key={num}
+        onClick={() => (pickMode && !disabled ? onPick?.(num) : !pickMode ? onOpen(num) : undefined)}
+        disabled={disabled}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 2,
+          aspectRatio: "1 / 1",
+          width: "100%",
+          borderRadius: "50%",
+          border: `2px solid ${c.border}`,
+          background: c.bg,
+          color: disabled ? "#b0b0a8" : "#1f1f1d",
+          padding: 4,
+          cursor: disabled ? "not-allowed" : "pointer",
+          opacity: disabled ? 0.55 : 1,
+        }}
+      >
+        <span style={{ fontWeight: 700, fontSize: "clamp(12px,3vw,15px)" }}>
+          #{num}
+        </span>
+        <span style={{ fontSize: "clamp(10px,2.6vw,13px)", color: c.countColor }}>
+          {count}/{CAPACITY}
+        </span>
+      </button>
+    );
+  };
+
+  // A side is a single table on top, then rows of two. The single table is
+  // centered and sized to match one column of the grid below it.
+  const renderSide = (topSingle: number, pairs: number[]) => (
     <div
       style={{
         flex: "1 1 0",
         minWidth: 0,
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
+        display: "flex",
+        flexDirection: "column",
         gap: 7,
       }}
     >
-      {nums.map((num) => {
-        const count = countOf(num);
-        const disabled = pickMode && disabledTables?.has(num);
-        const c = disabled
-          ? { border: "#d0d0ca", bg: "#f4f4f1", countColor: "#b0b0a8" }
-          : tableColors(count);
-        return (
-          <button
-            key={num}
-            onClick={() => (pickMode && !disabled ? onPick?.(num) : !pickMode ? onOpen(num) : undefined)}
-            disabled={disabled}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 2,
-              aspectRatio: "1 / 1",
-              width: "100%",
-              borderRadius: "50%",
-              border: `2px solid ${c.border}`,
-              background: c.bg,
-              color: disabled ? "#b0b0a8" : "#1f1f1d",
-              padding: 4,
-              cursor: disabled ? "not-allowed" : "pointer",
-              opacity: disabled ? 0.55 : 1,
-            }}
-          >
-            <span style={{ fontWeight: 700, fontSize: "clamp(12px,3vw,15px)" }}>
-              #{num}
-            </span>
-            <span style={{ fontSize: "clamp(10px,2.6vw,13px)", color: c.countColor }}>
-              {count}/{CAPACITY}
-            </span>
-          </button>
-        );
-      })}
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <div style={{ width: "calc(50% - 3.5px)" }}>{renderTable(topSingle)}</div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
+        {pairs.map(renderTable)}
+      </div>
     </div>
   );
 
@@ -286,7 +298,7 @@ export default function HallMap({
         }}
       >
         <div style={{ display: "flex", alignItems: "stretch", gap: 8 }}>
-          {renderSide(LEFT_NUMS)}
+          {renderSide(LEFT_TOP, LEFT_PAIRS)}
 
           <div
             style={{
@@ -337,7 +349,7 @@ export default function HallMap({
             </div>
           </div>
 
-          {renderSide(RIGHT_NUMS)}
+          {renderSide(RIGHT_TOP, RIGHT_PAIRS)}
         </div>
         <div
           style={{

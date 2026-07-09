@@ -1,5 +1,5 @@
 import knex, { type Knex } from "knex";
-import { TABLE_COUNT } from "./constants";
+import { TABLE_COUNT } from "./constants.js";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -46,10 +46,30 @@ async function createSchema(): Promise<void> {
       t.text("name").notNullable();
       t.integer("table_number").notNullable();
       t.timestamp("created_at", { useTz: true }).notNullable().defaultTo(db.fn.now());
-      t.check(`table_number BETWEEN 1 AND ${TABLE_COUNT}`);
     });
   }
   await db.raw(
     "CREATE INDEX IF NOT EXISTS idx_guests_table ON guests (table_number)"
   );
+  await ensureTableNumberRange();
+}
+
+// Keep the table_number range check in sync with TABLE_COUNT, replacing the
+// constraint on databases that were created with a different table count.
+async function ensureTableNumberRange(): Promise<void> {
+  await db.raw(`
+    DO $$
+    DECLARE c record;
+    BEGIN
+      FOR c IN
+        SELECT conname FROM pg_constraint
+        WHERE conrelid = 'guests'::regclass AND contype = 'c'
+      LOOP
+        EXECUTE 'ALTER TABLE guests DROP CONSTRAINT ' || quote_ident(c.conname);
+      END LOOP;
+      ALTER TABLE guests
+        ADD CONSTRAINT guests_table_number_check
+        CHECK (table_number BETWEEN 1 AND ${TABLE_COUNT});
+    END $$;
+  `);
 }
